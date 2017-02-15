@@ -24,7 +24,7 @@ import codecs
 import rdflib
 
 from nltools import misc
-from nltools.sparqlalchemy import SPARQLAlchemyStore
+from sparqlalchemy.sparqlalchemy import SPARQLAlchemyStore
 
 class TestSPARQLAlchemy (unittest.TestCase):
 
@@ -37,7 +37,7 @@ class TestSPARQLAlchemy (unittest.TestCase):
         #
 
         # db_url = config.get('db', 'url')
-        db_url = 'sqlite:///foo.db'
+        db_url = 'sqlite:///tmp/foo.db'
 
         self.sas = SPARQLAlchemyStore(db_url, 'unittests', echo=False)
         self.context = u'http://example.com'
