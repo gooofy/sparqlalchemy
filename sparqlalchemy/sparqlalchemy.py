@@ -104,13 +104,13 @@ class SPARQLAlchemyStore(object):
 
     def clear_graph(self, context=None):
 
-        logging.debug('clear_graph(%s)' % ('all' if context is None else unicode(context.identifier)))
+        logging.debug('clear_graph(%s)' % ('all' if context is None else context))
 
         conn = self.engine.connect()
 
         stmt = self.quads.delete()
         if not context is None:
-            stmt = stmt.where(self.quads.c.context == unicode(context.identifier))
+            stmt = stmt.where(self.quads.c.context == context)
 
         conn.execute(stmt)
 
@@ -217,12 +217,12 @@ class SPARQLAlchemyStore(object):
         # conn.close()
 
     def parse(self, source=None, publicID=None, format="xml",
-              location=None, file=None, data=None, context=rdflib.Graph(identifier='http://example.com'), **args):
+              location=None, file=None, data=None, context=u'http://example.com', **args):
 
         logging.debug('parsing to memory...')
 
         cj = rdflib.ConjunctiveGraph()
-        memg = cj.get_context(context.identifier)
+        memg = cj.get_context(context)
         memg.parse(source=source, publicID=publicID, format=format, location=location, 
                    file=file, data=data, **args)
 

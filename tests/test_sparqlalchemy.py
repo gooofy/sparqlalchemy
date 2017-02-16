@@ -40,8 +40,7 @@ class TestSPARQLAlchemy (unittest.TestCase):
         # db_url = 'sqlite:///tmp/foo.db'
 
         self.sas = SPARQLAlchemyStore(db_url, 'unittests', echo=True)
-        # FIXME: rdflib forces us to instantiate a graph here just to hold the context identifier
-        self.context = rdflib.Graph(identifier='http://example.com') 
+        self.context = u'http://example.com'
         
         #
         # import triples to test on
@@ -66,12 +65,12 @@ class TestSPARQLAlchemy (unittest.TestCase):
         self.assertEqual (len(self.sas), 152)
 
         # add a triple belonging to a different context
-        foo_context = rdflib.Graph(identifier='http://foo.com')
-        self.sas.addN([('foo', 'bar', 'baz', foo_context)])
+        foo_context = u'http://foo.com'
+        self.sas.addN([('foo', 'bar', 'baz', rdflib.Graph(identifier=foo_context))])
         self.assertEqual (len(self.sas), 153)
 
         # clear context that does not exist
-        self.sas.clear_graph(rdflib.Graph(identifier='http://bar.com'))
+        self.sas.clear_graph(u'http://bar.com')
         self.assertEqual (len(self.sas), 153)
 
         # clear context that does exist, make sure other triples survive
@@ -79,8 +78,8 @@ class TestSPARQLAlchemy (unittest.TestCase):
         self.assertEqual (len(self.sas), 1)
 
         # add a triple belonging to yet another context
-        foo_context = rdflib.Graph(identifier='http://baz.com')
-        self.sas.addN([('foo', 'bar', 'baz', foo_context)])
+        foo_context = u'http://baz.com'
+        self.sas.addN([('foo', 'bar', 'baz', rdflib.Graph(identifier=foo_context))])
         self.assertEqual (len(self.sas), 2)
 
         # test clear_all_graphs
