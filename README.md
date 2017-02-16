@@ -21,7 +21,7 @@ Requirements
 * Python 2.7 
 * RDFLib
 * SQLAlchemy
-* pu-nltools
+* py-nltools
 
 License
 =======
