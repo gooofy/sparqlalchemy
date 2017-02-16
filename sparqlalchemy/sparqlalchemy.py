@@ -219,6 +219,8 @@ class SPARQLAlchemyStore(object):
     def parse(self, source=None, publicID=None, format="xml",
               location=None, file=None, data=None, context=u'http://example.com', **args):
 
+        # parse to memory first, then do a bulk insert into our DB
+
         logging.debug('parsing to memory...')
 
         cj = rdflib.ConjunctiveGraph()
@@ -605,7 +607,7 @@ class SPARQLAlchemyStore(object):
 
         start_time = time()
         pq = parser.parseQuery(q)
-        logging.info ('parsing took %fs' % (time() - start_time))
+        logging.debug ('parsing took %fs' % (time() - start_time))
 
         logging.debug(pq)
         tq = algebra.translateQuery(pq)
@@ -620,6 +622,8 @@ class SPARQLAlchemyStore(object):
             logging.debug(line.strip())
 
         # print 'tq.prologue:', tq.prologue
+
+        assert tq.algebra.name == 'SelectQuery'
 
         stmt, var_map, var_lang, var_dts = self._algebra2alchemy(tq.algebra)
 
@@ -643,13 +647,11 @@ class SPARQLAlchemyStore(object):
         logging.debug('result: %s' % repr(result))
 
         for row in result:
-            logging.debug('   row: %s' % repr(row))
+            # logging.debug('   row: %s' % repr(row))
 
             d = {}
-            l = []
             for var_name in var_map:
                 v = vs[var_name]
-                l.append(v)
 
                 lang_col = var_lang[var_name].name if var_name in var_lang else None
                 dt_col   = var_dts[var_name].name  if var_name in var_dts  else None
@@ -663,11 +665,13 @@ class SPARQLAlchemyStore(object):
                 else:
                     d[v] = rdflib.URIRef(o)
 
+            logging.debug('   row: %s, %s' % (repr(d), tq.algebra.PV))
+
             # rr=ResultRow({ Variable('a'): URIRef('urn:cake') }, [Variable('a')])
-            rrows.append(rdflib.query.ResultRow(d, l))
+            # rrows.append(rdflib.query.ResultRow(d, tq.algebra.PV))
+            rrows.append(d)
 
-
-        qres.vars     = vs
+        qres.vars     = tq.algebra['PV']
         qres.bindings = rrows
 
         conn.close()
