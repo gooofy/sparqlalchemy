@@ -37,4 +37,5 @@ Author
 ======
 
 Guenter Bartsch <guenter@zamia.org>
+Heiko Schäfer <heiko@schaefer.name>
 
