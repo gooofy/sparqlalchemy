@@ -36,17 +36,18 @@ class TestSPARQLAlchemy (unittest.TestCase):
         # db, store
         #
 
-        # db_url = config.get('db', 'url')
-        db_url = 'sqlite:///tmp/foo.db'
+        db_url = config.get('db', 'url')
+        # db_url = 'sqlite:///tmp/foo.db'
 
-        self.sas = SPARQLAlchemyStore(db_url, 'unittests', echo=False)
-        self.context = u'http://example.com'
+        self.sas = SPARQLAlchemyStore(db_url, 'unittests', echo=True)
+        # FIXME: rdflib forces us to instantiate a graph here just to hold the context identifier
+        self.context = rdflib.Graph(identifier='http://example.com') 
         
         #
         # import triples to test on
         #
 
-        self.sas.clear_graph(self.context)
+        self.sas.clear_all_graphs()
 
         samplefn = 'tests/triples.n3'
 
@@ -59,6 +60,33 @@ class TestSPARQLAlchemy (unittest.TestCase):
     # @unittest.skip("temporarily disabled")
     def test_import(self):
         self.assertEqual (len(self.sas), 152)
+
+    # @unittest.skip("temporarily disabled")
+    def test_clear_graph(self):
+        self.assertEqual (len(self.sas), 152)
+
+        # add a triple belonging to a different context
+        foo_context = rdflib.Graph(identifier='http://foo.com')
+        self.sas.addN([('foo', 'bar', 'baz', foo_context)])
+        self.assertEqual (len(self.sas), 153)
+
+        # clear context that does not exist
+        self.sas.clear_graph(rdflib.Graph(identifier='http://bar.com'))
+        self.assertEqual (len(self.sas), 153)
+
+        # clear context that does exist, make sure other triples survive
+        self.sas.clear_graph(self.context)
+        self.assertEqual (len(self.sas), 1)
+
+        # add a triple belonging to yet another context
+        foo_context = rdflib.Graph(identifier='http://baz.com')
+        self.sas.addN([('foo', 'bar', 'baz', foo_context)])
+        self.assertEqual (len(self.sas), 2)
+
+        # test clear_all_graphs
+
+        self.sas.clear_all_graphs()
+        self.assertEqual (len(self.sas), 0)
 
     # @unittest.skip("temporarily disabled")
     def test_query_optional(self):

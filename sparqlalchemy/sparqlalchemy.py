@@ -102,17 +102,22 @@ class SPARQLAlchemyStore(object):
     #     logging.error('Unimplemented method: add(%s)' % repr((triple, context, quoted)))
 
 
-    def clear_graph(self, context):
+    def clear_graph(self, context=None):
 
-        logging.debug('clear_graph(%s)' % repr(context))
+        logging.debug('clear_graph(%s)' % ('all' if context is None else unicode(context.identifier)))
 
         conn = self.engine.connect()
 
-        stmt = self.quads.delete().where(self.quads.c.context == context)
+        stmt = self.quads.delete()
+        if not context is None:
+            stmt = stmt.where(self.quads.c.context == unicode(context.identifier))
 
         conn.execute(stmt)
 
         conn.close()
+
+    def clear_all_graphs(self):
+        self.clear_graph(None)
 
     def __len__(self):
         stmt = sql.select([func.count(self.quads.c.id)]).as_scalar()
@@ -212,12 +217,12 @@ class SPARQLAlchemyStore(object):
         # conn.close()
 
     def parse(self, source=None, publicID=None, format="xml",
-              location=None, file=None, data=None, context=u'http://example.com', **args):
+              location=None, file=None, data=None, context=rdflib.Graph(identifier='http://example.com'), **args):
 
         logging.debug('parsing to memory...')
 
         cj = rdflib.ConjunctiveGraph()
-        memg = cj.get_context(context)
+        memg = cj.get_context(context.identifier)
         memg.parse(source=source, publicID=publicID, format=format, location=location, 
                    file=file, data=data, **args)
 
@@ -669,63 +674,4 @@ class SPARQLAlchemyStore(object):
 
         return qres
 
-
-if __name__ == '__main__':
-
-    #
-    # init, cmdline
-    #
-
-    misc.init_app('sparqlalchemy')
-
-    option_parser = OptionParser("usage: %prog [options] foo.aiml")
-
-    option_parser.add_option ("-s", "--echo-sql", action="store_true", dest="echo",
-                       help="echo sql statements")
-
-    option_parser.add_option ("-v", "--verbose", action="store_true", dest="verbose",
-                       help="verbose output")
-
-    (options, args) = option_parser.parse_args()
-
-    if options.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-        if not options.echo:
-            logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
-    else:
-        logging.basicConfig(level=logging.INFO)
-
-    config = misc.load_config('.nlprc')
-
-    #
-    # db, store
-    #
-
-    db_url = config.get('db', 'url')
-    sas = SPARQLAlchemyStore(db_url, 'knowledgebase', echo=options.echo)
-
-    #
-    # parse sample files, add quads to store
-    #
-
-    for sfn in os.listdir('mirror'):
-
-        samplefn = 'mirror/%s' % sfn
-        context = u'http://example.com'
-
-        with codecs.open(samplefn, 'r', 'utf8') as samplef:
-
-            data = samplef.read()
-
-            logging.debug('parsing to %s memory...' % samplefn)
-            cj = rdflib.ConjunctiveGraph()
-            memg = cj.get_context(context)
-            memg.parse(format='n3', data=data)
-
-            quads = cj.quads()
-
-            logging.debug('addN ...')
-            sas.addN(quads)
-
-    # sas.clear_graph(context)
 
