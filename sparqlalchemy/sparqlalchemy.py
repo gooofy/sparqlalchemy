@@ -157,6 +157,9 @@ class SPARQLAlchemyStore(object):
             # logging.debug('quad: %s' % repr(( s,p,o,context, ov, ot, ol)))
 
         logging.debug('addN: %d quads to add.' % cnt)
+        if cnt==0:
+            logging.debug ('  -> nothing to do.')
+            return
 
         conn = self.engine.connect()
 
@@ -678,4 +681,49 @@ class SPARQLAlchemyStore(object):
 
         return qres
 
+    def filter_quads(self, s=None, p=None, o=None, context=None):
+
+        where_clause   = sql.expression.true()
+
+        if s:
+            where_clause = sql.expression.and_(where_clause, self.quads.c['s'] == unicode(s))
+        if p:
+            where_clause = sql.expression.and_(where_clause, self.quads.c['p'] == unicode(p))
+        if o:
+            where_clause = sql.expression.and_(where_clause, self.quads.c['o'] == unicode(o))
+        if context:
+            where_clause = sql.expression.and_(where_clause, self.quads.c['context'] == unicode(context))
+
+        sel = sql.select([self.quads.c['s'],
+                          self.quads.c['p'],
+                          self.quads.c['o'],
+                          self.quads.c['context'],
+                          self.quads.c['lang'],
+                          self.quads.c['datatype']]).where(where_clause)
+
+        conn = self.engine.connect()
+
+        result = conn.execute(sel)
+
+        quads = []
+        for row in result:
+            # logging.debug('   row: %s' % repr(row))
+
+            s       = row['o']
+            p       = row['p']
+            o       = row['o']
+            context = row['context']
+            lang    = row['lang']
+            dt      = row['datatype']
+
+            if lang or dt or not o:
+                o = rdflib.Literal(o, lang=lang, datatype=dt)
+            else:
+                o = rdflib.URIRef(o)
+    
+            quads.append((s,p,o,context))
+
+        conn.close()
+
+        return quads
 

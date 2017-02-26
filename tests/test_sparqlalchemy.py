@@ -66,7 +66,7 @@ class TestSPARQLAlchemy (unittest.TestCase):
 
         # add a triple belonging to a different context
         foo_context = u'http://foo.com'
-        self.sas.addN([('foo', 'bar', 'baz', rdflib.Graph(identifier=foo_context))])
+        self.sas.addN([(u'foo', u'bar', u'baz', rdflib.Graph(identifier=foo_context))])
         self.assertEqual (len(self.sas), 153)
 
         # clear context that does not exist
@@ -79,7 +79,7 @@ class TestSPARQLAlchemy (unittest.TestCase):
 
         # add a triple belonging to yet another context
         foo_context = u'http://baz.com'
-        self.sas.addN([('foo', 'bar', 'baz', rdflib.Graph(identifier=foo_context))])
+        self.sas.addN([(u'foo', u'bar', u'baz', rdflib.Graph(identifier=foo_context))])
         self.assertEqual (len(self.sas), 2)
 
         # test clear_all_graphs
@@ -261,6 +261,19 @@ class TestSPARQLAlchemy (unittest.TestCase):
             for v in res.vars:
                 s += ' %s=%s' % (v, row[v])
             logging.debug('sparql result row: %s' % s)
+
+    # @unittest.skip("temporarily disabled")
+    def test_filter_quads(self):
+
+        quads = self.sas.filter_quads(None, None, None, self.context)
+        self.assertEqual(len(quads), 152)
+
+        quads = self.sas.filter_quads(u'http://dbpedia.org/resource/Helmut_Kohl', None, None, self.context)
+        self.assertEqual(len(quads), 73)
+
+        quads = self.sas.filter_quads(u'http://dbpedia.org/resource/Helmut_Kohl', u'http://dbpedia.org/ontology/birthPlace', None, self.context)
+        self.assertEqual(len(quads), 2)
+
 
 
 if __name__ == "__main__":
