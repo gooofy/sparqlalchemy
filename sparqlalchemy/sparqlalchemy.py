@@ -614,26 +614,11 @@ class SPARQLAlchemyStore(object):
             logging.debug(line.strip())
 
 
-    def query(self, q):
+    def query_algebra(self, algebra):
 
-        global engine
+        assert algebra.name == 'SelectQuery'
 
-        logging.debug(q)
-
-        start_time = time()
-        pq = parser.parseQuery(q)
-        logging.debug ('parsing took %fs' % (time() - start_time))
-
-        logging.debug(pq)
-        tq = algebra.translateQuery(pq)
-
-        self.debug_log_algebra (tq)
-
-        # print 'tq.prologue:', tq.prologue
-
-        assert tq.algebra.name == 'SelectQuery'
-
-        stmt, var_map, var_lang, var_dts = self._algebra2alchemy(tq.algebra)
+        stmt, var_map, var_lang, var_dts = self._algebra2alchemy(algebra)
 
         logging.debug("executing SQL ...")
 
@@ -673,18 +658,39 @@ class SPARQLAlchemyStore(object):
                 else:
                     d[v] = rdflib.URIRef(o)
 
-            logging.debug('   row: %s, %s' % (repr(d), tq.algebra.PV))
+            logging.debug('   row: %s, %s' % (repr(d), algebra.PV))
 
             # rr=ResultRow({ Variable('a'): URIRef('urn:cake') }, [Variable('a')])
-            # rrows.append(rdflib.query.ResultRow(d, tq.algebra.PV))
+            # rrows.append(rdflib.query.ResultRow(d, algebra.PV))
             rrows.append(d)
 
-        qres.vars     = tq.algebra['PV']
+        qres.vars     = algebra['PV']
         qres.bindings = rrows
 
         conn.close()
 
         return qres
+
+
+
+    def query(self, q):
+
+        global engine
+
+        logging.debug(q)
+
+        start_time = time()
+        pq = parser.parseQuery(q)
+        logging.debug ('parsing took %fs' % (time() - start_time))
+
+        logging.debug(pq)
+        tq = algebra.translateQuery(pq)
+
+        self.debug_log_algebra (tq)
+
+        # print 'tq.prologue:', tq.prologue
+
+        return self.query_algebra (tq.algebra)
 
     def filter_quads(self, s=None, p=None, o=None, context=None, limit=0):
 
