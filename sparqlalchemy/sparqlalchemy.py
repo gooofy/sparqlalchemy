@@ -132,7 +132,7 @@ class SPARQLAlchemyStore(object):
 
     def addN(self, quads):
 
-        logging.debug('addN(quads)')
+        # logging.debug('addN(quads)')
 
         values = []
         cnt    = 0
@@ -156,16 +156,16 @@ class SPARQLAlchemyStore(object):
             cnt += 1
             # logging.debug('quad: %s' % repr(( s,p,o,context, ov, ot, ol)))
 
-        logging.debug('addN: %d quads to add.' % cnt)
+        # logging.debug('addN: %d quads to add.' % cnt)
         if cnt==0:
-            logging.debug ('  -> nothing to do.')
+            # logging.debug ('  -> nothing to do.')
             return
 
         conn = self.engine.connect()
 
         # first delete existing quads so we have no duplicate edges in our graph
 
-        logging.debug('addN: delete old quads...')
+        # logging.debug('addN: delete old quads...')
     
         stmt = self.quads.delete()\
                          .where(self.quads.c.s == sql.bindparam('b_s'))\
@@ -177,7 +177,7 @@ class SPARQLAlchemyStore(object):
 
         # now, insert quads
 
-        logging.debug('addN: insert new quads...')
+        # logging.debug('addN: insert new quads...')
 
         stmt = self.quads.insert().values(\
                          s        = sql.bindparam('b_s'), \
@@ -191,7 +191,7 @@ class SPARQLAlchemyStore(object):
 
         conn.close()
 
-        logging.debug('addN: done.')
+        # logging.debug('addN: done.')
 
         # alternative implementation: "upsert" (not supported by all sqlalchemy DB backends yet
 
@@ -602,6 +602,18 @@ class SPARQLAlchemyStore(object):
 
         return res, var_map, var_lang, var_dts
 
+    def debug_log_algebra (self, tq):
+
+        sio = StringIO.StringIO()
+        format_algebra(sio, tq)
+        sio.seek(0)
+        while True:
+            line = sio.readline()
+            if not line:
+                break
+            logging.debug(line.strip())
+
+
     def query(self, q):
 
         global engine
@@ -615,14 +627,7 @@ class SPARQLAlchemyStore(object):
         logging.debug(pq)
         tq = algebra.translateQuery(pq)
 
-        sio = StringIO.StringIO()
-        format_algebra(sio, tq)
-        sio.seek(0)
-        while True:
-            line = sio.readline()
-            if not line:
-                break
-            logging.debug(line.strip())
+        self.debug_log_algebra (tq)
 
         # print 'tq.prologue:', tq.prologue
 
@@ -681,7 +686,7 @@ class SPARQLAlchemyStore(object):
 
         return qres
 
-    def filter_quads(self, s=None, p=None, o=None, context=None):
+    def filter_quads(self, s=None, p=None, o=None, context=None, limit=0):
 
         where_clause   = sql.expression.true()
 
@@ -701,6 +706,9 @@ class SPARQLAlchemyStore(object):
                           self.quads.c['lang'],
                           self.quads.c['datatype']]).where(where_clause)
 
+        if limit>0:
+            sel = sel.limit(limit)
+
         conn = self.engine.connect()
 
         result = conn.execute(sel)
@@ -716,7 +724,7 @@ class SPARQLAlchemyStore(object):
             lang    = row['lang']
             dt      = row['datatype']
 
-            if lang or dt or not o:
+            if lang or dt or not o or not o.startswith('http://'):
                 o = rdflib.Literal(o, lang=lang, datatype=dt)
             else:
                 o = rdflib.URIRef(o)
