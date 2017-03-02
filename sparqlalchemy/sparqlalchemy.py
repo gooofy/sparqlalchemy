@@ -42,6 +42,8 @@ from rdflib.plugins.sparql             import parser, algebra
 from sqlalchemy import create_engine, sql, func
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, UnicodeText, Index
 
+ID_COLUMN_NAME = '__id__'
+
 def format_algebra(f, q):
 
     def pp(f, p, ind=u""):
@@ -343,7 +345,7 @@ class SPARQLAlchemyStore(object):
                 if var_name in p_var_dts:
                     var_dts[var_name] = p_var_dts[var_name]
 
-            sel_list = []
+            sel_list = [p_stmt.c[ID_COLUMN_NAME]]
             for var_name in var_map:
                 sel_list.append(var_map[var_name].label(var_name))
             for var_name in var_lang:
@@ -377,7 +379,7 @@ class SPARQLAlchemyStore(object):
                 if var_name in p_var_dts:
                     var_dts[var_name] = p_var_dts[var_name]
 
-            sel_list = []
+            sel_list = [p_stmt.c[ID_COLUMN_NAME]]
             for var_name in var_map:
                 sel_list.append(var_map[var_name].label(var_name))
             for var_name in var_lang:
@@ -403,7 +405,7 @@ class SPARQLAlchemyStore(object):
 
             expr = self._expr2alchemy(node['expr'], var_map, var_lang, var_dts)
 
-            sel_list = []
+            sel_list = [p_stmt.c[ID_COLUMN_NAME]]
             for var_name in var_map:
                 sel_list.append(var_map[var_name].label(var_name))
             for var_name in var_lang:
@@ -428,6 +430,12 @@ class SPARQLAlchemyStore(object):
             p_stmt, var_map, var_lang, var_dts = self._algebra2alchemy(node['p'])
 
             sel_list = []
+
+            if len(var_map)>0:
+                sel_list.append (var_map[var_map.keys()[0]].label(ID_COLUMN_NAME)) # re-use arbitrary variable as id column
+            else:
+                sel_list.append (p_stmt.c[ID_COLUMN_NAME])
+
             for var_name in var_map:
                 sel_list.append(var_map[var_name].label(var_name))
             for var_name in var_lang:
@@ -444,7 +452,7 @@ class SPARQLAlchemyStore(object):
             for var_name in var_dts:
                 var_dts[var_name] = res.c[var_name + '_dt']
 
-            logging.debug('Filter: res: %s' % res.compile(compile_kwargs={"literal_binds": True}))
+            logging.debug('Distinct: res: %s' % res.compile(compile_kwargs={"literal_binds": True}))
 
         elif node.name == 'LeftJoin':
 
@@ -479,7 +487,7 @@ class SPARQLAlchemyStore(object):
                 if not var_name in p1_var_dts:
                     var_dts[var_name] = p2_var_dts[var_name]
         
-            sel_list = []
+            sel_list = [p1_stmt.c[ID_COLUMN_NAME]]
             for var_name in var_map:
                 sel_list.append(var_map[var_name].label(var_name))
             for var_name in var_lang:
@@ -506,8 +514,10 @@ class SPARQLAlchemyStore(object):
 
                 logging.debug('BGP: t=%s' % repr(t))
 
+                # import pdb; pdb.set_trace()
+
                 where_clause   = sql.expression.true()
-                columns        = []
+                columns        = [self.quads.c['id'].label(ID_COLUMN_NAME)]
                 new_var_map    = {}
                 new_var_lang   = {}
                 new_var_dts    = {}
@@ -540,6 +550,8 @@ class SPARQLAlchemyStore(object):
                                 col = self.quads.c['datatype'].label(var_name+'_dt')
                                 new_var_dts[var_name] = col
                                 columns.append(col)
+                    else:
+                        raise Exception ('FIXME: unhandled type in BGP triple: %s' % type(t[c_idx]))
 
 
                 sel = sql.select(columns).where(where_clause).alias()
@@ -577,7 +589,7 @@ class SPARQLAlchemyStore(object):
 
                     # generate select from join
 
-                    columns      = []
+                    columns      = [res.c[ID_COLUMN_NAME]]
                     for var_name in var_map:
                         columns.append(var_map[var_name].label(var_name))
                     for var_name in var_lang:

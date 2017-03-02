@@ -22,13 +22,12 @@ import unittest
 import logging
 import codecs
 import rdflib
-from time import time
+from rdflib.plugins.sparql.parserutils import CompValue
 
-from nltools                     import misc
+from nltools import misc
 from sparqlalchemy.sparqlalchemy import SPARQLAlchemyStore
-from rdflib.plugins.sparql       import parser, algebra
 
-class TestSPARQLParser (unittest.TestCase):
+class TestExists (unittest.TestCase):
 
     def setUp(self):
 
@@ -59,33 +58,24 @@ class TestSPARQLParser (unittest.TestCase):
             self.sas.parse(data=data, context=self.context, format='n3')
 
     # @unittest.skip("temporarily disabled")
-    def test_query_optional(self):
+    def test_query_no_vars(self):
 
-        q = """
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX schema: <http://schema.org/>
-            PREFIX dbr: <http://dbpedia.org/resource/>
-            PREFIX dbo: <http://dbpedia.org/ontology/>
-            SELECT ?leader ?label ?leaderobj 
-            WHERE {
-                ?leader rdfs:label ?label. 
-                ?leader rdf:type schema:Person.
-                OPTIONAL {?leaderobj dbo:leader ?leader}
-            }
-            """
+        triples = [(rdflib.URIRef('http://dbpedia.org/resource/Helmut_Kohl'), 
+                    rdflib.URIRef('http://dbpedia.org/property/deputy'),  
+                    rdflib.URIRef('http://dbpedia.org/resource/Klaus_Kinkel'))]
 
-        start_time = time()
-        pq = parser.parseQuery(q)
-        logging.debug ('parsing took %fs' % (time() - start_time))
+        algebra = CompValue ('SelectQuery', p = CompValue('BGP', triples=triples, _vars=set()),
+                                            datasetClause = None, PV = [], _vars = set())
 
-        logging.debug(pq)
-        tq = algebra.translateQuery(pq)
+        res = self.sas.query_algebra(algebra)
 
-        self.sas.debug_log_algebra (tq)
+        self.assertEqual(len(res), 1)
 
-        logging.debug(tq.algebra.__class__)
-
+        for row in res:
+            s = ''
+            for v in res.vars:
+                s += ' %s=%s' % (v, row[v])
+            logging.debug('algebra result row: %s' % s)
 
 if __name__ == "__main__":
 
