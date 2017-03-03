@@ -332,6 +332,18 @@ class SPARQLAlchemyStore(object):
 
                 res = sql.and_(res, o)
 
+        elif node.name == 'ConditionalOrExpression':
+
+            self._check_keys(node, set(['expr', 'other', '_vars']))
+
+            res = self._expr2alchemy(node['expr'], var_map, var_lang, var_dts)
+
+            for e in node['other']:
+                
+                o = self._expr2alchemy(e, var_map, var_lang, var_dts)
+
+                res = sql.or_(res, o)
+
         else:
 
             raise Exception ('expression node type %s unknown.' % node.name)
