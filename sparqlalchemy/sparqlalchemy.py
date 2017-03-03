@@ -487,6 +487,36 @@ class SPARQLAlchemyStore(object):
 
             logging.debug('Distinct: res: %s' % res.compile(compile_kwargs={"literal_binds": True}))
 
+        elif node.name == 'Slice':
+
+            self._check_keys(node, set(['start', 'length', 'p', '_vars']))
+            p_stmt, var_map, var_lang, var_dts = self._algebra2alchemy(node['p'])
+
+            sel_list = []
+
+            if len(var_map)>0:
+                sel_list.append (var_map[var_map.keys()[0]].label(ID_COLUMN_NAME)) # re-use arbitrary variable as id column
+            else:
+                sel_list.append (p_stmt.c[ID_COLUMN_NAME])
+
+            for var_name in var_map:
+                sel_list.append(var_map[var_name].label(var_name))
+            for var_name in var_lang:
+                sel_list.append(var_lang[var_name].label(var_name + '_lang'))
+            for var_name in var_dts:
+                sel_list.append(var_dts[var_name].label(var_name + '_dt'))
+
+            res = sql.select(sel_list).select_from(p_stmt).offset(node['start']).limit(node['length']).alias()
+
+            for var_name in var_map:
+                var_map[var_name] = res.c[var_name]
+            for var_name in var_lang:
+                var_lang[var_name] = res.c[var_name + '_lang']
+            for var_name in var_dts:
+                var_dts[var_name] = res.c[var_name + '_dt']
+
+            logging.debug('Slice: res: %s' % res.compile(compile_kwargs={"literal_binds": True}))
+
         elif node.name == 'LeftJoin':
 
             self._check_keys(node, set(['p1', 'p2', 'expr', '_vars']))

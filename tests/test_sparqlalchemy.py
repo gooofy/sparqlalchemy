@@ -117,6 +117,28 @@ class TestSPARQLAlchemy (unittest.TestCase):
             logging.debug('sparql result row: %s' % s)
 
     # @unittest.skip("temporarily disabled")
+    def test_query_limit(self):
+
+        sparql = """
+                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                 PREFIX schema: <http://schema.org/>
+                 PREFIX dbr: <http://dbpedia.org/resource/>
+                 PREFIX dbo: <http://dbpedia.org/ontology/>
+                 SELECT ?leader ?label ?leaderobj 
+                 WHERE {
+                     ?leader rdfs:label ?label. 
+                     ?leader rdf:type schema:Person.
+                     OPTIONAL {?leaderobj dbo:leader ?leader}
+                 }
+                 LIMIT 1
+                 """
+
+        res = self.sas.query(sparql)
+
+        self.assertEqual(len(res), 1)
+
+    # @unittest.skip("temporarily disabled")
     def test_query_filter(self):
 
         sparql = """
