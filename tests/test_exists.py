@@ -77,6 +77,31 @@ class TestExists (unittest.TestCase):
                 s += ' %s=%s' % (v, row[v])
             logging.debug('algebra result row: %s' % s)
 
+    # # @unittest.skip("temporarily disabled")
+    # def test_query_none(self):
+
+    #     vx = rdflib.Variable('X')
+
+    #     triples = [(vx, 
+    #                 rdflib.URIRef('http://dbpedia.org/property/office'),  
+    #                 rdflib.URIRef('http://dbpedia.org/resource/Chancellor_of_Germany')),
+    #                (vx, 
+    #                 rdflib.URIRef('http://dbpedia.org/property/termEnd'),  
+    #                 None) ]
+
+    #     algebra = CompValue ('SelectQuery', p = CompValue('BGP', triples=triples, _vars=set([vx])),
+    #                                         datasetClause = None, PV = [vx], _vars = set([vx]))
+
+    #     res = self.sas.query_algebra(algebra)
+
+    #     self.assertEqual(len(res), 1)
+
+    #     for row in res:
+    #         s = ''
+    #         for v in res.vars:
+    #             s += ' %s=%s' % (v, row[v])
+    #         logging.debug('algebra result row: %s' % s)
+
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)

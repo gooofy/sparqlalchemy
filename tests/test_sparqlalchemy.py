@@ -26,6 +26,8 @@ import rdflib
 from nltools import misc
 from sparqlalchemy.sparqlalchemy import SPARQLAlchemyStore
 
+NUM_SAMPLE_ROWS = 153
+
 class TestSPARQLAlchemy (unittest.TestCase):
 
     def setUp(self):
@@ -58,20 +60,20 @@ class TestSPARQLAlchemy (unittest.TestCase):
 
     # @unittest.skip("temporarily disabled")
     def test_import(self):
-        self.assertEqual (len(self.sas), 152)
+        self.assertEqual (len(self.sas), NUM_SAMPLE_ROWS)
 
     # @unittest.skip("temporarily disabled")
     def test_clear_graph(self):
-        self.assertEqual (len(self.sas), 152)
+        self.assertEqual (len(self.sas), NUM_SAMPLE_ROWS)
 
         # add a triple belonging to a different context
         foo_context = u'http://foo.com'
         self.sas.addN([(u'foo', u'bar', u'baz', rdflib.Graph(identifier=foo_context))])
-        self.assertEqual (len(self.sas), 153)
+        self.assertEqual (len(self.sas), NUM_SAMPLE_ROWS + 1)
 
         # clear context that does not exist
         self.sas.clear_graph(u'http://bar.com')
-        self.assertEqual (len(self.sas), 153)
+        self.assertEqual (len(self.sas), NUM_SAMPLE_ROWS + 1)
 
         # clear context that does exist, make sure other triples survive
         self.sas.clear_graph(self.context)
@@ -266,7 +268,7 @@ class TestSPARQLAlchemy (unittest.TestCase):
     def test_filter_quads(self):
 
         quads = self.sas.filter_quads(None, None, None, self.context)
-        self.assertEqual(len(quads), 152)
+        self.assertEqual(len(quads), NUM_SAMPLE_ROWS)
 
         quads = self.sas.filter_quads(u'http://dbpedia.org/resource/Helmut_Kohl', None, None, self.context)
         self.assertEqual(len(quads), 73)
