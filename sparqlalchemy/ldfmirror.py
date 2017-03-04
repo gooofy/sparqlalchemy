@@ -165,11 +165,11 @@ class LDFMirror(object):
 
         todo = []
 
-        for resources, paths in res_paths:
+        for res_path in res_paths:
 
-            resolved_paths = map (lambda p: map(self.store.resolve_shortcuts, p), paths)
+            resolved_paths = map (lambda p: map(self.store.resolve_shortcuts, p), res_path[1])
 
-            for resource in resources:
+            for resource in res_path[0]:
 
                 if isinstance(resource, basestring):
                     rs = [ self.store.resolve_shortcuts (resource) ]
