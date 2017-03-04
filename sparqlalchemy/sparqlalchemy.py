@@ -73,9 +73,10 @@ class SPARQLAlchemyStore(object):
     def __init__(self, db_url, tablename, echo=False, aliases={}, prefixes={}):
 
         """
-        endpoints -- dict mapping host names to LDF endpoints, e.g. 
+        aliases   -- dict mapping resource aliases to IRIs, e.g.
                      {
-                         'www.wikidata.org': 'https://query.wikidata.org/bigdata/ldf',
+                          u'wde:Female' : u'http://www.wikidata.org/entity/Q6581072',
+                          u'wde:Male'   : u'http://www.wikidata.org/entity/Q6581097',
                      }
         prefixes  -- dict mapping aliases to IRIs, e.g.
                      {
@@ -105,6 +106,12 @@ class SPARQLAlchemyStore(object):
         self.engine = create_engine(db_url, echo=echo)
 
         self.metadata.create_all(self.engine)
+
+    def register_prefix (self, prefix, uri):
+        self.prefixes[prefix] = uri
+
+    def register_alias (self, alias, uri):
+        self.aliases[alias] = uri
 
     def resolve_shortcuts (self, resource):
 

@@ -47,10 +47,9 @@ class LDFMirror(object):
 
         store     -- target sparqlalchemy store
                     
-        aliases   -- dict mapping resource aliases to IRIs, e.g.
+        endpoints -- dict mapping host names to LDF endpoints, e.g. 
                      {
-                          u'wde:Female' : u'http://www.wikidata.org/entity/Q6581072',
-                          u'wde:Male'   : u'http://www.wikidata.org/entity/Q6581097',
+                         'www.wikidata.org': 'https://query.wikidata.org/bigdata/ldf',
                      }
         """
 
