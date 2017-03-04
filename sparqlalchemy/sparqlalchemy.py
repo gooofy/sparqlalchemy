@@ -70,10 +70,24 @@ def format_algebra(f, q):
 
 class SPARQLAlchemyStore(object):
 
-    def __init__(self, db_url, tablename, echo=False):
+    def __init__(self, db_url, tablename, echo=False, aliases={}, prefixes={}):
 
-        self.db_url = db_url
+        """
+        endpoints -- dict mapping host names to LDF endpoints, e.g. 
+                     {
+                         'www.wikidata.org': 'https://query.wikidata.org/bigdata/ldf',
+                     }
+        prefixes  -- dict mapping aliases to IRIs, e.g.
+                     {
+                          'dbo' : 'http://dbpedia.org/ontology/',
+                          'dbr' : 'http://dbpedia.org/resource/',
+                          'dbp' : 'http://dbpedia.org/property/',
+                     }
+        """
 
+        self.db_url   = db_url
+        self.aliases  = aliases
+        self.prefixes = prefixes
         self.metadata = MetaData()
 
         self.quads = Table(tablename, self.metadata,
@@ -91,6 +105,27 @@ class SPARQLAlchemyStore(object):
         self.engine = create_engine(db_url, echo=echo)
 
         self.metadata.create_all(self.engine)
+
+    def resolve_shortcuts (self, resource):
+
+        #
+        # apply aliases
+        #
+
+        if resource in self.aliases:
+            return self.aliases[resource]
+
+        #
+        # apply prefixes
+        #
+
+        for pfx in self.prefixes:
+            prefix = pfx + ':'
+            if resource.startswith(prefix):
+                resource = self.prefixes[pfx] + resource[len(prefix):]
+                break
+
+        return resource
 
     def remove(self, triple, context):
         """Remove a triple from the store."""
@@ -757,8 +792,6 @@ class SPARQLAlchemyStore(object):
 
         return qres
 
-
-
     def query(self, q):
 
         global engine
@@ -783,11 +816,11 @@ class SPARQLAlchemyStore(object):
         where_clause   = sql.expression.true()
 
         if s:
-            where_clause = sql.expression.and_(where_clause, self.quads.c['s'] == unicode(s))
+            where_clause = sql.expression.and_(where_clause, self.quads.c['s'] == self.resolve_shortcuts(unicode(s)))
         if p:
-            where_clause = sql.expression.and_(where_clause, self.quads.c['p'] == unicode(p))
+            where_clause = sql.expression.and_(where_clause, self.quads.c['p'] == self.resolve_shortcuts(unicode(p)))
         if o:
-            where_clause = sql.expression.and_(where_clause, self.quads.c['o'] == unicode(o))
+            where_clause = sql.expression.and_(where_clause, self.quads.c['o'] == self.resolve_shortcuts(unicode(o)))
         if context:
             where_clause = sql.expression.and_(where_clause, self.quads.c['context'] == unicode(context))
 
