@@ -115,6 +115,9 @@ class SPARQLAlchemyStore(object):
 
     def resolve_shortcuts (self, resource):
 
+        if isinstance(resource, rdflib.URIRef):
+            return rdflib.URIRef(self.resolve_shortcuts(unicode(resource)))
+
         #
         # apply aliases
         #

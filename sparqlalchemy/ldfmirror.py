@@ -166,7 +166,11 @@ class LDFMirror(object):
 
         for res_path in res_paths:
 
-            resolved_paths = map (lambda p: map(self.store.resolve_shortcuts, p), res_path[1])
+            resolved_paths = map( 
+                               lambda p: 
+                                 map( 
+                                   lambda p: (self.store.resolve_shortcuts(p[0]), p[1]) if type(p) is tuple else
+                                   self.store.resolve_shortcuts(p), p), res_path[1])
 
             for resource in res_path[0]:
 
@@ -196,15 +200,38 @@ class LDFMirror(object):
             # try to fetch from our triple store
             quads = self.store.filter_quads(s=resource, context=self.context.identifier)
 
+            do_add = False
             if len(quads) == 0:
 
                 quads = self._fetch_ldf (s=resource)
+                do_add = True
 
+            # transformations
+
+            if len(path)>0:
+                res_filter = path[0]
+
+                if type(res_filter) is tuple:
+                    pred, f = res_filter
+
+                    for s,p,o,c in quads:
+                        if unicode(p) != pred:
+                            continue
+
+                        np, no = f(o)
+
+                        np = self.store.resolve_shortcuts(np)
+
+                        if do_add:
+                            quads.append ((s, np, no, c))
+
+                        res_filter = unicode(np)
+
+            if do_add:
                 self.store.addN(quads)
 
             if len(path)>0:
 
-                res_filter = path[0]
                 new_path   = path[1:]
 
                 for s,p,o,c in quads:
@@ -215,6 +242,8 @@ class LDFMirror(object):
                     # logging.debug ('LDF   checking %s %s' % (p, o))
 
                     if res_filter == '*' or res_filter == unicode(p):
+
+                        # import pdb; pdb.set_trace()
 
                         task = (o, new_path)
 

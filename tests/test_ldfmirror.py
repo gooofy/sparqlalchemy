@@ -52,6 +52,7 @@ COMMON_PREFIXES = {
 
 ENDPOINTS = {
                 'www.wikidata.org': 'https://query.wikidata.org/bigdata/ldf',
+                'sws.geonames.org': 'http://data.linkeddatafragments.org/geonames',
             }
 
 RESOURCE_ALIASES = {
@@ -64,6 +65,7 @@ RESOURCE_ALIASES = {
                       u'wde:FederalChancellorOfGermany' : u'http://www.wikidata.org/entity/Q4970706',
                       u'wde:Female'                     : u'http://www.wikidata.org/entity/Q6581072',
                       u'wde:Male'                       : u'http://www.wikidata.org/entity/Q6581097',
+                      u'wde:Freudental'                 : u'http://www.wikidata.org/entity/Q61656',
                    }
 
 # wikidata properties
@@ -79,7 +81,9 @@ for prefix, iri in [('wdpd',    'http://www.wikidata.org/prop/direct/'),
                               (u'PositionHeld'               , u'P39'),
                               (u'Occupation'                 , u'P106'),
                               (u'StartTime'                  , u'P580'),
-                              (u'EndTime'                    , u'P582'), ]:
+                              (u'EndTime'                    , u'P582'), 
+                              (u'GeoNamesID'                 , u'P1566'), 
+                             ]:
 
         RESOURCE_ALIASES[prefix + ':' + proplabel] = iri + propid
 
@@ -176,6 +180,25 @@ class TestLDFMirror (unittest.TestCase):
         quads = self.sas.filter_quads(u'wde:HelmutKohl', 'wdpd:PlaceOfBirth', 'wde:Q2910')
         self.assertEqual(len(quads), 1)
 
+    # @unittest.skip("temporarily disabled")
+    def test_path_lambda(self):
+
+        # path segments can contain tuples with lambda functions that transform the entry
+
+        RES_PATHS = [
+                      ( [ u'wde:Freudental'],
+                        [
+                          [('wdpd:GeoNamesID', lambda l: (rdflib.URIRef('hal:GeoNames'), rdflib.URIRef('http://sws.geonames.org/%s/' % l)))], 
+                        ]
+                      )
+                    ]
+        self.ldfmirror.mirror (RES_PATHS, self.context)
+
+        quads = self.sas.filter_quads(u'wde:Freudental', 'hal:GeoNames', 'http://sws.geonames.org/2924888/')
+        self.assertEqual(len(quads), 1)
+
+        quads = self.sas.filter_quads('http://sws.geonames.org/2924888/', u'http://www.geonames.org/ontology#countryCode', 'DE')
+        self.assertEqual(len(quads), 1)
 
 if __name__ == "__main__":
 
