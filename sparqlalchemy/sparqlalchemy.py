@@ -30,9 +30,9 @@ import logging
 import requests
 import StringIO
 
+import dateutil.parser
 from time import time
 from optparse import OptionParser
-
 from nltools import misc
 
 import rdflib
@@ -186,9 +186,10 @@ class SPARQLAlchemyStore(object):
         for s, p, o, context in quads:
 
             if isinstance(o, rdflib.Literal):
-                ov = unicode(o.value)
+                ov = unicode(o)
                 ot = o.datatype
                 ol = o.language
+
             else:
                 ov = unicode(o)
                 ot = None
@@ -277,6 +278,15 @@ class SPARQLAlchemyStore(object):
         memg = cj.get_context(context)
         memg.parse(source=source, publicID=publicID, format=format, location=location, 
                    file=file, data=data, **args)
+
+        # for s, p, o in memg:
+        #     if not isinstance (o, rdflib.Literal):
+        #         continue
+        #     if not 'dateTime' in o.datatype:
+        #         continue
+        #     # import pdb; pdb.set_trace()
+        #     s = unicode(o)
+        #     print u"Got one!! %s" % s
 
         quads = cj.quads()
 
@@ -784,10 +794,7 @@ class SPARQLAlchemyStore(object):
                 lang = row[lang_col] if lang_col else None
                 dt   = row[dt_col]   if dt_col else None
 
-                if lang or dt or not o:
-                    d[v] = rdflib.Literal(o, lang=lang, datatype=dt)
-                else:
-                    d[v] = rdflib.URIRef(o)
+                d[v] = self._db_to_rdflib(o, lang, dt)
 
             logging.debug('   row: %s, %s' % (repr(d), algebra.PV))
 
@@ -854,19 +861,23 @@ class SPARQLAlchemyStore(object):
 
             s       = row['o']
             p       = row['p']
-            o       = row['o']
             context = row['context']
             lang    = row['lang']
             dt      = row['datatype']
-
-            if lang or dt or not o or not o.startswith('http://'):
-                o = rdflib.Literal(o, lang=lang, datatype=dt)
-            else:
-                o = rdflib.URIRef(o)
+            o       = self._db_to_rdflib(row['o'], lang, dt)
     
             quads.append((s,p,o,context))
 
         conn.close()
 
         return quads
+
+    def _db_to_rdflib(self, o, lang, dt):
+
+        if lang or dt or not o or not o.startswith('http://'):
+            o = rdflib.Literal(o, lang=lang, datatype=dt)
+        else:
+            o = rdflib.URIRef(o)
+
+        return o
 

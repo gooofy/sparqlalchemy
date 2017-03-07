@@ -1,0 +1,25 @@
+@prefix dbo: <http://dbpedia.org/ontology/> .
+@prefix dbr: <http://dbpedia.org/resource/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix hal: <http://hal.zamia.org/kb/> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix wde: <http://www.wikidata.org/entity/>.
+
+hal:sun_Washington__D_C__20161209 hal:date "2016-12-09"^^xsd:date ;
+    hal:dawn "2016-12-09T06:45:51-05:00"^^xsd:dateTime ;
+    hal:dusk "2016-12-09T17:15:44-05:00"^^xsd:dateTime ;
+    hal:location wde:Q61 ;
+    hal:noon "2016-12-09T12:00:43-05:00"^^xsd:dateTime ;
+    hal:sunrise "2016-12-09T07:15:40-05:00"^^xsd:dateTime ;
+    hal:sunset "2016-12-09T16:45:56-05:00"^^xsd:dateTime .
+
+hal:sun_Washington__D_C__20161210 hal:date "2016-12-10"^^xsd:date ;
+    hal:dawn "2016-12-10T06:46:37-05:00"^^xsd:dateTime ;
+    hal:dusk "2016-12-10T17:15:53-05:00"^^xsd:dateTime ;
+    hal:location wde:Q61 ;
+    hal:noon "2016-12-10T12:01:10-05:00"^^xsd:dateTime ;
+    hal:sunrise "2016-12-10T07:16:28-05:00"^^xsd:dateTime ;
+    hal:sunset "2016-12-10T16:46:03-05:00"^^xsd:dateTime .
+
