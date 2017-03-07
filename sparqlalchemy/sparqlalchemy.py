@@ -137,10 +137,29 @@ class SPARQLAlchemyStore(object):
 
         return resource
 
-    def remove(self, triple, context):
-        """Remove a triple from the store."""
-        subject, predicate, obj = triple
-        logging.error('Unimplemented method: remove(%s)' % repr((triple, context)))
+    def remove(self, quad):
+        """Remove quad(s) from the store."""
+        s, p, o, context = quad
+
+        stmt = self.quads.delete()
+
+        if s:
+            stmt = stmt.where(self.quads.c.s == unicode(s))
+        if p:
+            stmt = stmt.where(self.quads.c.p == unicode(p))
+        if o:
+            stmt = stmt.where(self.quads.c.o == unicode(o))
+        if context:
+            stmt = stmt.where(self.quads.c.context == unicode(context))
+
+        logging.debug ('remove stmt: %s' % stmt)
+
+        conn = self.engine.connect()
+
+        conn.execute(stmt)
+
+        conn.close()
+
 
     # def add(self, triple, context=None):
     #     """Add a triple to the store of triples."""
