@@ -109,7 +109,7 @@ class LDFMirror(object):
 
             memg = rdflib.Graph()
             memg.parse(data=response.text, format='turtle')
-           
+          
             for s2,p2,o2 in memg.triples((rdflib.URIRef(s) if s else None, 
                                           rdflib.URIRef(p) if p else None, 
                                           rdflib.URIRef(o) if o else None )):

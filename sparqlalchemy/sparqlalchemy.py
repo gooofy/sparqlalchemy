@@ -152,7 +152,7 @@ class SPARQLAlchemyStore(object):
         if context:
             stmt = stmt.where(self.quads.c.context == unicode(context))
 
-        logging.debug ('remove stmt: %s' % stmt)
+        # logging.debug ('remove stmt: %s' % stmt)
 
         conn = self.engine.connect()
 
@@ -337,6 +337,10 @@ class SPARQLAlchemyStore(object):
         elif isinstance(node, rdflib.term.Variable):
 
             res = var_map[unicode(node)]
+
+        elif isinstance (node, rdflib.term.URIRef):
+
+            res = unicode(node)
 
         elif node.name == 'RelationalExpression':
 
@@ -799,6 +803,8 @@ class SPARQLAlchemyStore(object):
 
         logging.debug('result: %s' % repr(result))
 
+        logging.debug('\t'.join(sorted(var_map)))
+
         for row in result:
             # logging.debug('   row: %s' % repr(row))
 
@@ -815,7 +821,12 @@ class SPARQLAlchemyStore(object):
 
                 d[v] = self._db_to_rdflib(o, lang, dt)
 
-            logging.debug('   row: %s, %s' % (repr(d), algebra.PV))
+            # logging.debug('   row: %s, %s' % (repr(d), algebra.PV))
+
+            row_values = []
+            for var_name in sorted(var_map):
+                row_values.append(unicode(d[vs[var_name]]))
+            logging.debug (u'   row: %s' % u'\t'.join(row_values))
 
             # rr=ResultRow({ Variable('a'): URIRef('urn:cake') }, [Variable('a')])
             # rrows.append(rdflib.query.ResultRow(d, algebra.PV))
