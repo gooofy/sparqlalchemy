@@ -679,6 +679,9 @@ class SPARQLAlchemyStore(object):
                     if isinstance (t[c_idx], rdflib.term.URIRef):
                         where_clause = sql.expression.and_(where_clause, self.quads.c[c_name] == unicode(t[c_idx]))
 
+                    elif isinstance (t[c_idx], rdflib.term.Literal):
+                        where_clause = sql.expression.and_(where_clause, self.quads.c[c_name] == unicode(t[c_idx]))
+
                     elif isinstance (t[c_idx], rdflib.term.Variable):
                         var_name = unicode(t[c_idx])
 
