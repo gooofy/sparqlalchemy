@@ -892,7 +892,7 @@ class SPARQLAlchemyStore(object):
         for row in result:
             # logging.debug('   row: %s' % repr(row))
 
-            s       = row['o']
+            s       = row['s']
             p       = row['p']
             context = row['context']
             lang    = row['lang']
