@@ -113,6 +113,13 @@ class LDFMirror(object):
             for s2,p2,o2 in memg.triples((rdflib.URIRef(s) if s else None, 
                                           rdflib.URIRef(p) if p else None, 
                                           rdflib.URIRef(o) if o else None )):
+
+                # print english labels as we come across them to make mirroring log less boring
+                if isinstance(o2, rdflib.term.Literal) \
+                    and unicode(p2) == u'http://www.w3.org/2000/01/rdf-schema#label' \
+                    and o2.language == u'en':
+                    logging.info (u'LDF:   fetched LABEL(en)=%s' % o2)
+
                 # logging.debug ('quad: %s %s %s' % (s2,p2,o2))
                 quads.append((s2,p2,o2,self.context))
 
