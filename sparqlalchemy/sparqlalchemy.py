@@ -829,7 +829,7 @@ class SPARQLAlchemyStore(object):
             row_values = []
             for var_name in sorted(var_map):
                 row_values.append(unicode(d[vs[var_name]]))
-            logging.debug (u'   row: %s' % u'\t'.join(row_values))
+            # logging.debug (u'   row: %s' % u'\t'.join(row_values))
 
             # rr=ResultRow({ Variable('a'): URIRef('urn:cake') }, [Variable('a')])
             # rrows.append(rdflib.query.ResultRow(d, algebra.PV))
