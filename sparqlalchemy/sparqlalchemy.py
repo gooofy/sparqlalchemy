@@ -861,6 +861,29 @@ class SPARQLAlchemyStore(object):
 
         return self.query_algebra (tq.algebra)
 
+    def get_all_predicates(self, limit=0):
+
+        sel = sql.select([ self.quads.c['p'] ]).distinct()
+
+        if limit>0:
+            sel = sel.limit(limit)
+
+        conn = self.engine.connect()
+
+        result = conn.execute(sel)
+
+        preds = []
+        for row in result:
+            # logging.debug('   row: %s' % repr(row))
+
+            p       = row['p']
+    
+            preds.append(p)
+
+        conn.close()
+
+        return preds
+
     def filter_quads(self, s=None, p=None, o=None, context=None, limit=0):
 
         where_clause   = sql.expression.true()
