@@ -147,7 +147,7 @@ class LDFMirror(object):
 
         A very simple example of a resource path may consist of just a start resource, e.g.
 
-        ( [ u'wde:AngelaMerkel' ], [] )
+        ( [ u'wde:AngelaMerkel' ], [ [] ] )
 
         this would mirror the resource u'wde:AngelaMerkel' with all its direct properties but
         not recurse into the graph at all. Imagine we'd also be interested in her birth place
@@ -257,3 +257,58 @@ class LDFMirror(object):
                         # logging.debug ('LDF   adding new task: %s' % repr(task))
                         todo.append(task)
 
+
+
+class LDFMirrorP2E(LDFMirror):
+    """
+    Like LDFMirror but fetches property entities as well
+    """
+
+    def __init__ (self, store, endpoints, p2e_mapper ):
+        """
+        Create new endpoint mirror helper with P2E (propert to entity mapping) support
+        Like LDFMirror but fetches property entities as well.
+
+        store     -- target sparqlalchemy store
+                    
+        endpoints -- dict mapping host names to LDF endpoints, e.g. 
+                     {
+                         'www.wikidata.org': 'https://query.wikidata.org/bigdata/ldf',
+                     }
+
+        p2emapper -- function that will be called on each property for entity mapping
+                     wikidata example:
+                         def p2e_mapper(p):
+                             if p.startswith('http://www.wikidata.org/prop/direct/'):
+                                 return 'http://www.wikidata.org/entity/' + p[36:]
+                             if p.startswith('http://www.wikidata.org/prop/'):
+                                 return 'http://www.wikidata.org/entity/' + p[29:]
+                             return None
+        """
+
+        self.p2e_mapper = p2e_mapper
+        
+        super (LDFMirrorP2E, self).__init__(store, endpoints)
+
+
+    def mirror (self, res_paths, context):
+
+        super (LDFMirrorP2E, self).mirror(res_paths, context)
+
+        preds = self.store.get_all_predicates()
+
+        pred_ents = set()
+        for p in preds:
+            pe = self.p2e_mapper(p)
+            if pe:
+                pred_ents.add(pe)
+
+        # call mirror() again on list of property entities to ensure those
+        # are present in our mirrored dataset as well
+
+        res_list = []
+        for pe in sorted (pred_ents):
+            res_list.append(pe)
+
+        super (LDFMirrorP2E, self).mirror([(res_list, [[]])], context)
+        
