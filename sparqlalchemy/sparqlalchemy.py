@@ -405,7 +405,7 @@ class SPARQLAlchemyStore(object):
             # logging.debug ('arg=%s' % node['arg'].__class__)
 
             if not isinstance (node['arg'], rdflib.term.Variable):
-                raise Exception ('Builtin_LANG: argumented expected to be a variable.')
+                raise Exception ('Builtin_LANG: argument expected to be a variable, %s (%s) found instead.' % (node['arg'], type(node['arg'])))
 
             res = var_lang[unicode(node['arg'])]
 
